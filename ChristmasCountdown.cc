@@ -14,26 +14,31 @@ static void InterruptHandler(int signo) {
 
 static int usage(const char *progname) {
   fprintf(stderr, "usage: %s [options]\n", progname);
-  rgb_matrix::PrintMatrixFlags(stderr);
+  PrintMatrixFlags(stderr);
   return 1;
 }
 
-int getWidthOfInt(int value, Font *font) {
-    // Convert number to string
-    std::string s = std::to_string(value);
-
-    // Convert each digit to Unicode (uint32_t)
-    std::vector<uint32_t> unicode;
-    for (char c : s) {
-        unicode.push_back(static_cast<uint32_t>(c));
-    }
-
+int getWidthOfInt(const int value, const Font *font) {
+    const std::string s = std::to_string(value);
     int sum = 0;
-    for(uint32_t digit : unicode) {
-        sum += font->CharacterWidth(digit);
+    for (const char c : s) {
+        sum += font->CharacterWidth(static_cast<uint32_t>(c));
     }
-
     return sum;
+}
+
+
+struct DrawConfig {
+    int value;
+    std::string unit;
+    Color color;
+};
+
+void drawLine(const int value, const Font &font, const std::string &line, Canvas *canvas, const Color &color, const int line_scalar) {
+    const std::string s = std::to_string(value);
+
+    DrawText(canvas, font, 0, font.baseline() * line_scalar, color, nullptr, line.c_str());
+    DrawText(canvas, font, canvas->width() - getWidthOfInt(value, &font), font.baseline() * line_scalar, color, nullptr, s.c_str());
 }
 
 int main(int argc, char *argv[]) {
@@ -42,26 +47,26 @@ int main(int argc, char *argv[]) {
     signal(SIGINT, InterruptHandler);
 
     RGBMatrix::Options matrix_options;
-    rgb_matrix::RuntimeOptions runtime_opt;
-    if (!rgb_matrix::ParseOptionsFromFlags(&argc, &argv, &matrix_options, &runtime_opt)) {
+    RuntimeOptions runtime_opt;
+    if (!ParseOptionsFromFlags(&argc, &argv, &matrix_options, &runtime_opt)) {
         return usage(argv[0]);
     }
 
-    Color green(0, 255, 0);
-    Color red(255, 0, 0);
-    Color blue(0, 0, 255);
-    Color white(255, 255, 255);
+    matrix_options.brightness = 10;
+    matrix_options.cols = 64;
+    matrix_options.hardware_mapping = "adafruit-hat";
 
-    int letter_spacing = 0;
+    const Color green(0, 255, 0);
+    const Color red(255, 0, 0);
 
-    rgb_matrix::Font font;
+    Font font;
     if (!font.LoadFont("/home/rpi/projects/led-matrix-display/lib/rpi-rgb-led-matrix/fonts/6x10.bdf")) {
         fprintf(stderr, "font load failed");
         return 1;
     }
     RGBMatrix *canvas = RGBMatrix::CreateFromOptions(matrix_options, runtime_opt);
-    if (canvas == NULL) {
-        fprintf(stderr, "canvas was NULL");
+    if (canvas == nullptr) {
+        fprintf(stderr, "canvas was nullptr");
         return 1;
     }
 
@@ -69,54 +74,40 @@ int main(int argc, char *argv[]) {
 
 
     while(!interrupt_received) {
-
         offscreen_canvas->Clear();
 
         // Declaring argument for time()
         time_t tt;
 
-        // Declaring variable to store return value of
-        // localtime()
-        struct tm* ti;
-
         // Applying time()
         time(&tt);
 
         // Using localtime()
-        ti = localtime(&tt);
+        const tm *ti = localtime(&tt);
 
-        std::stringstream day_stream;
-        std::stringstream hour_stream;
-        std::stringstream min_stream;
-        std::stringstream sec_stream;
-
-        int num_days = 24 - ti->tm_mday;
-        int num_hours = 23 - ti->tm_hour;
-        int num_min = 59 - ti->tm_min;
-        int num_sec = 59 - ti->tm_sec;
-
-        day_stream << 24 - ti->tm_mday;
-        std::string days = day_stream.str();
-        hour_stream << 23 - ti->tm_hour;
-        std::string hours = hour_stream.str();
-        min_stream << 59 - ti->tm_min;
-        std::string minutes = min_stream.str();
-        sec_stream << 59 - ti->tm_sec;
-        std::string seconds = sec_stream.str();
+        const int num_days = 24 - ti->tm_mday;
+        const int num_hours = 23 - ti->tm_hour;
+        const int num_min = 59 - ti->tm_min;
+        const int num_sec = 59 - ti->tm_sec;
 
 
-        std::string first_line = "Days";
-        std::string second_line = "Hours";
-        std::string third_line = "Minutes";
-        std::string fourth_line = "Seconds";
-        rgb_matrix::DrawText(offscreen_canvas, font, 0, font.baseline(), green, NULL, first_line.c_str(), letter_spacing);
-        rgb_matrix::DrawText(offscreen_canvas, font, offscreen_canvas->width() - getWidthOfInt(num_days, &font), font.baseline(), green, NULL, days.c_str(), letter_spacing);
-        rgb_matrix::DrawText(offscreen_canvas, font, 0, font.baseline() * 2, red, NULL, second_line.c_str(), letter_spacing);
-        rgb_matrix::DrawText(offscreen_canvas, font, offscreen_canvas->width() - getWidthOfInt(num_hours, &font), font.baseline() * 2, red, NULL, hours.c_str(), letter_spacing);
-        rgb_matrix::DrawText(offscreen_canvas, font, 0, font.baseline() * 3, green, NULL, third_line.c_str(), letter_spacing);
-        rgb_matrix::DrawText(offscreen_canvas, font, offscreen_canvas->width() - getWidthOfInt(num_min, &font), font.baseline() * 3, green, NULL, minutes.c_str(), letter_spacing);
-        rgb_matrix::DrawText(offscreen_canvas, font, 0, font.baseline() * 4, red, NULL, fourth_line.c_str(), letter_spacing);
-        rgb_matrix::DrawText(offscreen_canvas, font, offscreen_canvas->width() - getWidthOfInt(num_sec, &font), font.baseline() * 4, red, NULL, seconds.c_str(), letter_spacing);
+        const std::string first_line = "Days";
+        const std::string second_line = "Hours";
+        const std::string third_line = "Minutes";
+        const std::string fourth_line = "Seconds";
+
+        std::vector<DrawConfig> draw_configs = {
+            {num_days, first_line, green},
+            {num_hours, second_line, red},
+            {num_min, third_line, green},
+            {num_sec, fourth_line, red}
+        };
+
+        int i = 1;
+        for (const auto &[value, unit, color] : draw_configs) {
+            drawLine(value, font, unit, offscreen_canvas, color, i);
+            i++;
+        }
 
         offscreen_canvas = canvas->SwapOnVSync(offscreen_canvas);
 
