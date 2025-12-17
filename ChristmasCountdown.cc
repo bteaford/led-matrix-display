@@ -85,28 +85,34 @@ int main(int argc, char *argv[]) {
         // Using localtime()
         const tm *ti = localtime(&tt);
 
-        const int num_days = 24 - ti->tm_mday;
+        const int num_days = 357 - ti->tm_yday;
         const int num_hours = 23 - ti->tm_hour;
         const int num_min = 59 - ti->tm_min;
         const int num_sec = 59 - ti->tm_sec;
 
+        if (num_days == -1) {
+            int y1 = (offscreen_canvas->height() / 4) + (font.height() / 2);
+            int y2 = (offscreen_canvas->height() * 3 / 4) + (font.height() / 2);
+            DrawText(offscreen_canvas, font, 0, y1, red, nullptr, "It's");
+            DrawText(offscreen_canvas, font, 0, y2, green, nullptr, "Christmas!");
+        } else {
+            const std::string first_line = "Days";
+            const std::string second_line = "Hours";
+            const std::string third_line = "Minutes";
+            const std::string fourth_line = "Seconds";
 
-        const std::string first_line = "Days";
-        const std::string second_line = "Hours";
-        const std::string third_line = "Minutes";
-        const std::string fourth_line = "Seconds";
+            std::vector<DrawConfig> draw_configs = {
+                {num_days < 0 ? 358 + (6 + num_days) : num_days, first_line, green},
+                {num_hours, second_line, red},
+                {num_min, third_line, green},
+                {num_sec, fourth_line, red}
+            };
 
-        std::vector<DrawConfig> draw_configs = {
-            {num_days, first_line, green},
-            {num_hours, second_line, red},
-            {num_min, third_line, green},
-            {num_sec, fourth_line, red}
-        };
-
-        int i = 1;
-        for (const auto &[value, unit, color] : draw_configs) {
-            drawLine(value, font, unit, offscreen_canvas, color, i);
-            i++;
+            int i = 1;
+            for (const auto &[value, unit, color] : draw_configs) {
+                drawLine(value, font, unit, offscreen_canvas, color, i);
+                i++;
+            }
         }
 
         offscreen_canvas = canvas->SwapOnVSync(offscreen_canvas);
