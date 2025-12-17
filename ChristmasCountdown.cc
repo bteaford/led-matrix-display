@@ -1,7 +1,7 @@
 #include "led-matrix.h"
 #include "graphics.h"
 
-#include <signal.h>
+#include <csignal>
 #include <chrono>
 #include <sstream>
 #include <string>
