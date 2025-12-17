@@ -2,6 +2,7 @@
 #include "graphics.h"
 
 #include <signal.h>
+#include <chrono>
 #include <sstream>
 #include <string>
 
@@ -25,6 +26,10 @@ int getWidthOfInt(const int value, const Font *font) {
         sum += font->CharacterWidth(static_cast<uint32_t>(c));
     }
     return sum;
+}
+
+bool isLeapYear(const int year) {
+    return (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
 }
 
 
@@ -85,7 +90,7 @@ int main(int argc, char *argv[]) {
         // Using localtime()
         const tm *ti = localtime(&tt);
 
-        const int num_days = 357 - ti->tm_yday;
+        const int num_days = (isLeapYear(ti->tm_year) ? 358 : 357) - ti->tm_yday;
         const int num_hours = 23 - ti->tm_hour;
         const int num_min = 59 - ti->tm_min;
         const int num_sec = 59 - ti->tm_sec;
