@@ -1,40 +1,80 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(ChristmasCountdown LANGUAGES CXX)
+project(MatrixDisplay LANGUAGES CXX)
 
 # ---- C++ standard ----
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# ---- Warnings & optimization ----
-add_compile_options(
-    -Wall
-    -Wextra
-    -Wno-unused-parameter
-)
+# ---- Dependencies ----
+find_package(ImageMagick COMPONENTS Magick++ MagickCore REQUIRED)
+find_package(Threads REQUIRED)
 
-# ---- rpi-rgb-led-matrix paths ----
+# ---- rpi-rgb-led-matrix (prebuilt library) ----
 set(RGB_ROOT ${CMAKE_SOURCE_DIR}/lib/rpi-rgb-led-matrix)
-set(RGB_INCLUDE_DIR ${RGB_ROOT}/include)
-set(RGB_LIBRARY ${RGB_ROOT}/lib/librgbmatrix.a)
 
-# ---- Declare imported library ----
-add_library(rgbmatrix STATIC IMPORTED)
+add_library(rgbmatrix INTERFACE)
 
-set_target_properties(rgbmatrix PROPERTIES
-    IMPORTED_LOCATION ${RGB_LIBRARY}
-    INTERFACE_INCLUDE_DIRECTORIES ${RGB_INCLUDE_DIR}
+target_include_directories(rgbmatrix INTERFACE
+        ${RGB_ROOT}/include
 )
 
-# ---- Main executable ----
-add_executable(ChristmasCountdown
-    ChristmasCountdown.cc
+target_link_libraries(rgbmatrix INTERFACE
+        ${RGB_ROOT}/lib/librgbmatrix.a
 )
 
-# ---- Link everything ----
-target_link_libraries(ChristmasCountdown PRIVATE
-    rgbmatrix
-    rt
-    m
-    pthread
+# ---- MatrixOperations library ----
+add_library(MatrixOperations STATIC
+        src/util/MatrixOperations.cpp
+)
+
+target_include_directories(MatrixOperations PUBLIC
+        ${CMAKE_SOURCE_DIR}/src/include
+)
+
+target_include_directories(MatrixOperations SYSTEM PUBLIC
+        ${ImageMagick_INCLUDE_DIRS}
+)
+
+target_link_libraries(MatrixOperations PUBLIC
+        rgbmatrix
+        ${ImageMagick_LIBRARIES}
+)
+
+target_compile_options(MatrixOperations PRIVATE
+        -Wall
+        -Wextra
+        -Wno-unused-parameter
+)
+
+target_compile_definitions(MatrixOperations PUBLIC
+        MAGICKCORE_QUANTUM_DEPTH=16
+        MAGICKCORE_HDRI_ENABLE=0
+)
+
+
+add_library(Display STATIC
+        src/displays/Display.cpp
+        src/displays/ChristmasCountdownDisplay.cpp
+        src/displays/ScrollingImageDisplay.cpp
+)
+
+target_include_directories(Display PUBLIC
+        ${CMAKE_SOURCE_DIR}/src/include
+        ${CMAKE_SOURCE_DIR}/src/displays
+)
+
+target_link_libraries(Display PUBLIC
+        MatrixOperations
+)
+
+# ---- Executables (at project root) ----
+
+add_executable(MatrixDisplay
+        MatrixDisplay.cpp
+)
+
+target_link_libraries(MatrixDisplay PRIVATE
+        MatrixOperations
+        Display
 )
