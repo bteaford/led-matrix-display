@@ -1,6 +1,5 @@
 #ifndef CHRISTMASCOUNTDOWN_CHRISTMASCOUNTDOWNDISPLAY_H
 #define CHRISTMASCOUNTDOWN_CHRISTMASCOUNTDOWNDISPLAY_H
-#include <unistd.h>
 
 #include "Display.h"
 
@@ -16,8 +15,7 @@ private:
     rgb_matrix::Font font;
 
     static bool isLeapYear(int year);
-    static int getWidthOfInt(int value, const rgb_matrix::Font *font);
-    static void drawLine(int value, const rgb_matrix::Font &font, const std::string &line, rgb_matrix::Canvas *canvas, const rgb_matrix::Color &color, int line_scalar);
+    void drawCountdown(rgb_matrix::RGBMatrix &matrix, rgb_matrix::FrameCanvas *canvas);
 
     struct DrawConfig {
         int value;

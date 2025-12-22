@@ -14,6 +14,7 @@ namespace MatrixOperations {
         matrix_options.brightness = 10;
         matrix_options.cols = 64;
         matrix_options.hardware_mapping = "adafruit-hat";
+        runtime_opt.gpio_slowdown = 4;
 
         return rgb_matrix::RGBMatrix::CreateFromOptions(matrix_options, runtime_opt);
     }

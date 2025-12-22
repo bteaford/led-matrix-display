@@ -23,49 +23,54 @@ target_link_libraries(rgbmatrix INTERFACE
         ${RGB_ROOT}/lib/librgbmatrix.a
 )
 
-# ---- MatrixOperations library ----
-add_library(MatrixOperations STATIC
+# ---- Util library ----
+add_library(Util STATIC
         src/util/MatrixOperations.cpp
+        src/util/Drawable.cpp
+        src/util/Text.cpp
+        src/util/Image.cpp
+        src/util/Screen.cpp
 )
 
-target_include_directories(MatrixOperations PUBLIC
-        ${CMAKE_SOURCE_DIR}/src/include
+target_include_directories(Util PUBLIC
+        ${CMAKE_SOURCE_DIR}/src/util
 )
 
-target_include_directories(MatrixOperations SYSTEM PUBLIC
+target_include_directories(Util SYSTEM PUBLIC
         ${ImageMagick_INCLUDE_DIRS}
 )
 
-target_link_libraries(MatrixOperations PUBLIC
+target_link_libraries(Util PUBLIC
         rgbmatrix
         ${ImageMagick_LIBRARIES}
 )
 
-target_compile_options(MatrixOperations PRIVATE
+target_compile_options(Util PRIVATE
         -Wall
         -Wextra
         -Wno-unused-parameter
 )
 
-target_compile_definitions(MatrixOperations PUBLIC
+target_compile_definitions(Util PUBLIC
         MAGICKCORE_QUANTUM_DEPTH=16
         MAGICKCORE_HDRI_ENABLE=0
 )
 
 
-add_library(Display STATIC
+add_library(Displays STATIC
         src/displays/Display.cpp
         src/displays/ChristmasCountdownDisplay.cpp
         src/displays/ScrollingImageDisplay.cpp
+        src/displays/NCAAFScoreDisplay.cpp
 )
 
-target_include_directories(Display PUBLIC
-        ${CMAKE_SOURCE_DIR}/src/include
+target_include_directories(Displays PUBLIC
+        ${CMAKE_SOURCE_DIR}/src/util
         ${CMAKE_SOURCE_DIR}/src/displays
 )
 
-target_link_libraries(Display PUBLIC
-        MatrixOperations
+target_link_libraries(Displays PUBLIC
+        Util
 )
 
 # ---- Executables (at project root) ----
@@ -75,6 +80,6 @@ add_executable(MatrixDisplay
 )
 
 target_link_libraries(MatrixDisplay PRIVATE
-        MatrixOperations
-        Display
+        Util
+        Displays
 )
