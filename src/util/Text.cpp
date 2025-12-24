@@ -7,6 +7,30 @@ Text::Text(const int x, const int y, const std::string &text_param, rgb_matrix::
     this->font = font_param;
 }
 
+std::string Text::getText() {
+    return text;
+}
+
+void Text::setText(const std::string &text_param) {
+    this->text = text_param;
+}
+
+rgb_matrix::Color Text::getColor() const {
+    return color;
+}
+
+void Text::setColor(const rgb_matrix::Color color_param) {
+    this->color = color_param;
+}
+
+rgb_matrix::Font* Text::getFont() const {
+    return font;
+}
+
+void Text::setFont(rgb_matrix::Font* font_param) {
+    this->font = font_param;
+}
+
 int Text::height() {
     return font->height();
 }

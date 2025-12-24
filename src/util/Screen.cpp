@@ -23,21 +23,21 @@ Screen::Screen(const int horizontalScrollDirection, const int verticalScrollDire
     this->lowest_vertical_scrolling_drawable = nullptr;
 }
 
-void Screen::addStaticDrawable(std::unique_ptr<Drawable> drawable) {
-    this->static_drawables.push_back(std::move(drawable));
+void Screen::addStaticDrawable(Drawable* drawable) {
+    this->static_drawables.push_back(drawable);
 }
 
-void Screen::addScrollingDrawable(std::unique_ptr<Drawable> drawable) {
-    this->scrolling_drawables.push_back(std::move(drawable));
+void Screen::addScrollingDrawable(Drawable* drawable) {
+    scrolling_drawables.push_back(drawable);
     isNewScrollingDrawableExtreme(drawable);
 }
 
 Drawable* Screen::getStaticDrawable(const int pos) const {
-    return static_drawables.at(pos).get();
+    return static_drawables.at(pos);
 }
 
 Drawable* Screen::getScrollingDrawable(const int pos) const {
-    return scrolling_drawables.at(pos).get();
+    return scrolling_drawables.at(pos);
 }
 
 void Screen::draw(rgb_matrix::Canvas *canvas) const {
@@ -46,7 +46,9 @@ void Screen::draw(rgb_matrix::Canvas *canvas) const {
     }
 
     for (const auto & scrolling_drawable : this->scrolling_drawables) {
-        scrolling_drawable->draw(canvas);
+        if (!scrolling_drawable->isOffScreen(canvas->width(), canvas->height())) {
+            scrolling_drawable->draw(canvas);
+        }
     }
 }
 
@@ -59,12 +61,12 @@ void Screen::scroll() const {
 
 void Screen::reset(const int canvasWidth, const int canvasHeight) const {
     int x_mod = 0, y_mod = 0;
-    if (this->horizontal_scroll_direction != 0) {
+    if (this->horizontal_scroll_direction != 0 && rightmost_scrolling_drawable != nullptr && leftmost_scrolling_drawable != nullptr) {
         x_mod = rightmost_scrolling_drawable->getX() + rightmost_scrolling_drawable->width() - leftmost_scrolling_drawable->getX() + canvasWidth;
         x_mod *= -1;
     }
-    if (this->vertical_scroll_direction != 0) {
-        y_mod = rightmost_scrolling_drawable->getY() + rightmost_scrolling_drawable->height() - leftmost_scrolling_drawable->getY() + canvasHeight;
+    if (this->vertical_scroll_direction != 0 && highest_vertical_scrolling_drawable != nullptr && lowest_vertical_scrolling_drawable != nullptr) {
+        y_mod = highest_vertical_scrolling_drawable->getY() + highest_vertical_scrolling_drawable->height() - lowest_vertical_scrolling_drawable->getY() + canvasHeight;
         y_mod *= -1;
     }
 
@@ -88,33 +90,33 @@ bool Screen::isScrollingComplete(const int canvasWidth, const int canvasHeight) 
                 leftmost_scrolling_drawable != nullptr &&
                 leftmost_scrolling_drawable->getX() > canvasWidth);
     const bool isVerticalScrollingComplete = (vertical_scroll_direction < 0 &&
-        rightmost_scrolling_drawable != nullptr &&
-        rightmost_scrolling_drawable->getY() + rightmost_scrolling_drawable->height() < 0) ||
+        highest_vertical_scrolling_drawable != nullptr &&
+        highest_vertical_scrolling_drawable->getY() + highest_vertical_scrolling_drawable->height() < 0) ||
             (vertical_scroll_direction > 0 &&
-                leftmost_scrolling_drawable != nullptr &&
-                leftmost_scrolling_drawable->getY() > canvasHeight);
+                lowest_vertical_scrolling_drawable != nullptr &&
+                lowest_vertical_scrolling_drawable->getY() > canvasHeight);
     return (!isHorizontalScrolling || isHorizontalScrollingComplete) && (!isVerticalScrolling || isVerticalScrollingComplete);
 }
 
 
-void Screen::isNewScrollingDrawableExtreme(const std::unique_ptr<Drawable>& drawable) {
+void Screen::isNewScrollingDrawableExtreme(Drawable* drawable) {
     if (rightmost_scrolling_drawable == nullptr ||
         (horizontal_scroll_direction < 0 && drawable->getX() + drawable->width() > rightmost_scrolling_drawable->getX() + rightmost_scrolling_drawable->width())) {
-        rightmost_scrolling_drawable = drawable.get();
+        rightmost_scrolling_drawable = drawable;
     }
 
     if (leftmost_scrolling_drawable == nullptr  ||
             (horizontal_scroll_direction > 0 && drawable->getX() < leftmost_scrolling_drawable->getX())) {
-        leftmost_scrolling_drawable = drawable.get();
+        leftmost_scrolling_drawable = drawable;
     }
 
     if (lowest_vertical_scrolling_drawable == nullptr ||
         (vertical_scroll_direction < 0 && drawable->getY() + drawable->height() > lowest_vertical_scrolling_drawable->getY() + lowest_vertical_scrolling_drawable->height())) {
-        lowest_vertical_scrolling_drawable = drawable.get();
+        lowest_vertical_scrolling_drawable = drawable;
     }
 
     if (highest_vertical_scrolling_drawable == nullptr  ||
             (vertical_scroll_direction > 0 &&  drawable->getY() + drawable->height() < highest_vertical_scrolling_drawable->getY())) {
-        highest_vertical_scrolling_drawable = drawable.get();
+        highest_vertical_scrolling_drawable = drawable;
     }
 }
