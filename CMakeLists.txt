@@ -62,6 +62,8 @@ add_library(Displays STATIC
         src/displays/ChristmasCountdownDisplay.cpp
         src/displays/ScrollingImageDisplay.cpp
         src/displays/NCAAFScoreDisplay.cpp
+        src/displays/StaticImageDisplay.cpp
+        src/displays/StaticImageDisplay.h
 )
 
 target_include_directories(Displays PUBLIC

@@ -5,14 +5,14 @@
 
 ChristmasCountdownDisplay::ChristmasCountdownDisplay() :
 screen(Screen(0, 0)),
-num_of_days(Text(0, 0, "", &font, rgb_matrix::Color(0, 255, 0))),
-num_of_hours(Text(0, 0, "", &font, rgb_matrix::Color(255, 0, 0))),
-num_of_minutes(Text(0, 0, "", &font, rgb_matrix::Color(0, 255, 0))),
-num_of_seconds(Text(0, 0, "", &font, rgb_matrix::Color(255, 0, 0))),
 days_label(Text(0, 0, "Days", &font, rgb_matrix::Color(0, 255, 0))),
+num_of_days(Text(0, 0, "", &font, rgb_matrix::Color(0, 255, 0))),
 hours_label(Text(0, 0, "Hours", &font, rgb_matrix::Color(255, 0, 0))),
+num_of_hours(Text(0, 0, "", &font, rgb_matrix::Color(255, 0, 0))),
 minutes_label(Text(0, 0, "Minutes", &font, rgb_matrix::Color(0, 255, 0))),
-seconds_label(Text(0, 0, "Seconds", &font, rgb_matrix::Color(255, 0, 0)))
+num_of_minutes(Text(0, 0, "", &font, rgb_matrix::Color(0, 255, 0))),
+seconds_label(Text(0, 0, "Seconds", &font, rgb_matrix::Color(255, 0, 0))),
+num_of_seconds(Text(0, 0, "", &font, rgb_matrix::Color(255, 0, 0)))
 {}
 
 void ChristmasCountdownDisplay::load() {
